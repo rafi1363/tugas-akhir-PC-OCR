@@ -46,6 +46,10 @@ class OCRApp(QMainWindow):
         self.header_button.clicked.connect(self.detect_header)
         layout.addWidget(self.header_button)
 
+        # Label untuk menampilkan akurasi
+        self.accuracy_label = QLabel("Accuracy: N/A")
+        layout.addWidget(self.accuracy_label)
+
         # Widget utama
         container = QWidget()
         container.setLayout(layout)
@@ -70,7 +74,13 @@ class OCRApp(QMainWindow):
 
             # Format hasil OCR
             extracted_text = "\n".join([text[1] for text in result])
+
+            # Ambil akurasi dari hasil OCR
+            accuracy = sum([text[2] for text in result]) / len(result) if result else 0
+
+            # Tampilkan hasil OCR dan akurasi
             self.text_area.setText(extracted_text)
+            self.accuracy_label.setText(f"Accuracy: {accuracy * 100:.2f}%")
         else:
             self.text_area.setText("Please select an image first!")
 
@@ -79,7 +89,7 @@ class OCRApp(QMainWindow):
             # Load gambar dan crop bagian atas (kop surat)
             img = cv2.imread(self.image_path)
             height, width = img.shape[:2]
-            header_area = img[0:int(height * 0.5), 0:width]  # Ambil 20% area atas
+            header_area = img[0:int(height * 0.5), 0:width]  # Ambil 50% area atas
 
             # Simpan area kop surat sementara
             header_path = "header_temp.jpg"
@@ -89,9 +99,15 @@ class OCRApp(QMainWindow):
             reader = easyocr.Reader(['en', 'id'])
             result = reader.readtext(header_path)
 
-            # Ekstrak elemen-elemen penting
+            # Format hasil OCR
             header_text = "\n".join([text[1] for text in result])
+
+            # Ambil akurasi dari hasil OCR
+            accuracy = sum([text[2] for text in result]) / len(result) if result else 0
+
+            # Tampilkan hasil header dan akurasi
             self.text_area.setText(f"Detected Header:\n{header_text}")
+            self.accuracy_label.setText(f"Header Detection Accuracy: {accuracy * 100:.2f}%")
 
             # Tambahkan regex untuk identifikasi pola tertentu
             nama_perusahaan = re.search(r"(PT\.?\s\w+)", header_text)
